@@ -1,7 +1,7 @@
 import asyncio
 import argparse
 from config import config
-from chat import submit_message
+from chat import send_message_to_server
 
 # 5d457500-e4ca-11eb-8c47-0242ac110002
 if __name__ == '__main__':
@@ -11,4 +11,4 @@ if __name__ == '__main__':
     parser.add_argument('--token', dest='token', help='User token', type=str, required=True)
     parser.add_argument('--message', dest='message', help='Message to send', type=str, required=True)
     args = parser.parse_args()
-    asyncio.run(submit_message(args.host, args.port, args.token, args.message))
+    asyncio.run(send_message_to_server(args.host, args.port, args.token, args.message))
