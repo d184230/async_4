@@ -7,12 +7,7 @@ import requests.exceptions
 
 @asynccontextmanager
 async def connection_manager(*args, **kwargs):
-    while True:
-        try:
-            reader, writer = await asyncio.open_connection(*args, **kwargs)
-            break
-        except requests.exceptions.ConnectionError:
-            await asyncio.sleep(2)
+    reader, writer = await asyncio.open_connection(*args, **kwargs)
     try:
         yield reader, writer
     finally:
@@ -97,17 +92,18 @@ async def run_readonly_client(host, port, path_to_file_history=None):
     :param path_to_file_history: str: optional: Путь к файлу для сохранения истории чата (опционально)
     :return: None
     """
-    async with connection_manager(host, port) as connection:
-        reader, writer = connection
-        while True:
-            try:
-                message_bytes = await reader.readline()
-                message = message_bytes.decode('utf8').strip()
-                message_datetime = datetime.now()
-                message_with_datetime = f'[{message_datetime.strftime("%d.%m.%Y %H:%M")}] {message}'
-                print(message_with_datetime)
-                if path_to_file_history:
-                    async with aiofiles.open(path_to_file_history, mode='a', encoding='utf8') as f:
-                        await f.write(f'{message_with_datetime}\n')
-            except requests.exceptions.ConnectionError:
-                reader, writer = await asyncio.open_connection(host, port)
+    while True:
+        try:
+            async with connection_manager(host, port) as connection:
+                reader, writer = connection
+                while True:
+                    message_bytes = await reader.readline()
+                    message = message_bytes.decode('utf8').strip()
+                    message_datetime = datetime.now()
+                    message_with_datetime = f'[{message_datetime.strftime("%d.%m.%Y %H:%M")}] {message}'
+                    print(message_with_datetime)
+                    if path_to_file_history:
+                        async with aiofiles.open(path_to_file_history, mode='a', encoding='utf8') as f:
+                            await f.write(f'{message_with_datetime}\n')
+        except requests.exceptions.ConnectionError:
+            await asyncio.sleep(1)
